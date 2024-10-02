@@ -6,7 +6,7 @@ import vueJsx from '@vitejs/plugin-vue-jsx'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: '/Yandex-Speller-Usage-Example/',
+  base: '/YA-Speller-Vue/',
   plugins: [vue(), vueJsx()],
   resolve: {
     alias: {
