@@ -1,7 +1,7 @@
 <template>
   <speller-header />
   <main class="container mx-auto">
-    <h1 class="mb-24 text-5xl text-gray-700">Оцените работу Спеллера</h1>
+    <h1 class="mb-24 text-2xl sm:text-3xl lg:text-5xl text-gray-700">Оцените работу Спеллера</h1>
     <speller-form v-model="text" />
   </main>
   <speller-footer />
