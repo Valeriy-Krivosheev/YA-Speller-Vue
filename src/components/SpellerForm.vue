@@ -7,7 +7,7 @@
         <textarea
           ref="textarea"
           v-if="isShowTextArea"
-          v-model="textValue"
+          v-model="model"
           rows="4"
           class="w-full px-0 text-sm text-gray-900 bg-white border-0 dark:bg-gray-800 focus:ring-0 dark:text-white dark:placeholder-gray-400 text-xm leading-4 min-h-24"
           placeholder="Введите текст для проверки"
@@ -42,7 +42,7 @@
       <div class="flex items-center justify-between px-3 py-2 border-t dark:border-gray-600">
         <button
           type="submit"
-          :disabled="isDisabled"
+          :disabled="isDisabled || isLoading"
           class="disabled:bg-blue-300 inline-flex items-center py-2.5 px-4 text-sm font-medium text-center text-white bg-blue-500 rounded-lg focus:ring-4 focus:ring-blue-200 hover:enabled:bg-blue-600"
         >
           Проверить текст
@@ -56,13 +56,7 @@
 import { computed, type CSSProperties, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { initFlowbite } from 'flowbite'
 import axios from 'axios'
-import {
-  formProps,
-  spellerResponse,
-  AxiosResponse,
-  newSpellerWord,
-  helperPositionType
-} from '@/components/types'
+import { formProps, spellerResponse, AxiosResponse, newSpellerWord } from '@/components/types'
 
 onMounted(() => {
   initFlowbite()
@@ -70,22 +64,15 @@ onMounted(() => {
 
 const props = defineProps<formProps>()
 const emit = defineEmits<{ (e: 'update:modelValue', value: string): void }>()
+const model = defineModel<string>()
 
 const isDisabled = computed<boolean>(() => !props.modelValue.trim())
+const isLoading = ref<boolean>(false)
 const isShowTextArea = ref<boolean>(true)
 const textarea = ref<HTMLTextAreaElement | null>(null)
 const form = ref<HTMLFormElement | null>(null)
 const fakeTextarea = ref<HTMLElement | null>(null)
 const fakeTextareaContent = ref<HTMLElement | null>(null)
-
-const textValue = computed<string>({
-  get() {
-    return props.modelValue
-  },
-  set(newValue) {
-    emit('update:modelValue', newValue)
-  }
-})
 
 const errorList = ref<spellerResponse[]>([])
 const spellerWords = ref<newSpellerWord[]>([])
@@ -97,6 +84,7 @@ const helperPosition = ref<CSSProperties>({
 })
 const sendRequest = async (): Promise<void> => {
   try {
+    isLoading.value = true
     const response: AxiosResponse<spellerResponse[]> = await axios.get(
       'https://speller.yandex.net/services/spellservice.json/checkText',
       {
@@ -110,16 +98,20 @@ const sendRequest = async (): Promise<void> => {
     insertSpellerText()
   } catch (e) {
     alert(e)
+  } finally {
+    setTimeout(() => {
+      isLoading.value = false
+    }, 200)
   }
 }
 
 const insertSpellerText = (): void => {
-  let updatedText: string = textValue.value
+  let updatedText = model.value as string
   let htmlOffset: number = 0
   errorList.value.forEach((error: spellerResponse, index: number) => {
     const { pos, len } = error
     error.index = `error-${index}`
-    const word: string = textValue.value.substring(pos, pos + len)
+    const word: string = (model.value as string).substring(pos, pos + len)
     const wrappedWord: string = `<span id="error-${index}"  class="bg-red-300 cursor-pointer p-0.5 rounded hover:bg-red-200 transition-colors" data-error='${JSON.stringify(
       error
     )}'>${word}</span>`
@@ -132,7 +124,7 @@ const insertSpellerText = (): void => {
   highlightedText.value = updatedText
 }
 const replaceWord = (word: newSpellerWord) => {
-  const targetSpan = document.getElementById(String(word.index))
+  const targetSpan = document.getElementById(word.index)
   if (targetSpan) {
     targetSpan.innerText = word.value
     targetSpan.className = 'pointer-events-none'

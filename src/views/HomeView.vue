@@ -17,5 +17,5 @@ onMounted(() => {
   initFlowbite()
 })
 
-const text = ref('')
+const text = ref<string>('')
 </script>

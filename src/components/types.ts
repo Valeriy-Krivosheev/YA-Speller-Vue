@@ -25,9 +25,3 @@ export interface newSpellerWord {
   index: string
   value: string
 }
-export interface helperPositionType {
-  top: string
-  left: string
-  bottom?: string
-  right?: string
-}
